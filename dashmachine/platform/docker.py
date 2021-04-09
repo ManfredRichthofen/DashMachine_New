@@ -1,3 +1,104 @@
+"""
+##### Docker
+Display information from Docker API. Informations can be displayed on a custom card or on an app card (e.g. Portainer App)
+```ini
+[variable_name]
+platform = docker
+prefix = http://
+host = localhost
+port = 2375
+value_template = {{ value_template }}
+```
+> **Returns:** `value_template` as rendered string
+| Variable        | Required | Description                                                     | Options           |
+|-----------------|----------|-----------------------------------------------------------------|-------------------|
+| [variable_name] | Yes      | Name for the data source.                                       | [variable_name]   |
+| platform        | Yes      | Name of the platform.                                           | docker            |
+| prefix          | No       | The prefix for the app's url.                                   | web prefix, e.g. http:// or https://              |
+| host            | Yes      | Docker Host                                                     | url,ip            |
+| port            | No       | Docker Port                                                     | port, usually 2375 (Insecure) or 2376 (TLS)              |
+| api_version     | No       | Docker API version to use (Default : platform will try to find latest version)                                      | 1.40           |
+| tls_mode        | No       | TLS verification mode, default is None                          | Server, Client, Both, None        |
+| tls_ca          | No       | Requierd for tls_mode=Both or tls_mode=Server, default is None  | /path/to/ca, None |
+| tls_cert        | No       | Requierd for tls_mode=Both or tls_mode=Client, default is None  | /path/to/cert, None |
+| tls_key         | No       | Requierd for tls_mode=Both or tls_mode=Client, default is None  | /path/to/key, None|
+| card_type       | No       | Set to Custom if you want to display informations in a custom card. Default is App | Custom, App|
+| value_template  | Yes      | Jinja template for how the returned data from API is displayed. | jinja template    |
+<br />
+###### **Available fields for value_template**
+* version
+* max_api_version
+* name
+* containers
+* containers_running
+* containers_paused
+* containers_stopped
+* images
+* driver
+* cpu
+* memory
+* warnings
+* error (for debug)
+> **Working example (using un-encrypted connection, on Portainer card):**
+>```ini
+> [docker-endpoint-1]
+> platform = docker
+> prefix = http://
+> host = 192.168.0.110
+> port = 2375
+> value_template = {{error}}<p style="text-align:right;text-transform:uppercase;font-size:14px;font-family: monospace;">{{name}}<br /><i style="position: relative; top: .2rem" class="material-icons md-18 theme-success-text" title="Running">fiber_manual_record</i>{{containers_running}}<i style="position: relative; top: .2rem" class="material-icons md-18 theme-warning-text" title="Paused">fiber_manual_record</i>{{containers_paused}}<i style="position: relative; top: .2rem" class="material-icons md-18 theme-failure-text" title="Stopped">fiber_manual_record</i>{{containers_stopped}}</p>
+>
+> [Portainer]
+> prefix = http://
+> url = 192.168.0.110:2375
+> icon = static/images/apps/portainer.png
+> sidebar_icon = static/images/apps/portainer.png
+> description = Making Docker management easy
+> open_in = this_tab
+> data_sources = docker-endpoint-1
+>```
+>
+>
+> **Working example (using encrypted connection, on Portainer card):**
+>```ini
+> [docker-endpoint-2]
+> platform = docker
+> prefix = https://
+> host = 192.168.0.110
+> port = 2376
+> tls_mode = Both
+> tls_ca = /path/to/ca_file
+> tls_cert = /path/to/cert_file
+> tls_key = /path/to/key_file
+> value_template = {{error}}<p style="text-align:right;text-transform:uppercase;font-size:14px;font-family: monospace;">{{name}}<br /><i style="position: relative; top: .2rem" class="material-icons md-18 theme-success-text" title="Running">fiber_manual_record</i>{{containers_running}}<i style="position: relative; top: .2rem" class="material-icons md-18 theme-warning-text" title="Paused">fiber_manual_record</i>{{containers_paused}}<i style="position: relative; top: .2rem" class="material-icons md-18 theme-failure-text" title="Stopped">fiber_manual_record</i>{{containers_stopped}}</p>
+>
+> [Portainer]
+> prefix = http://
+> url = 192.168.0.110:2375
+> icon = static/images/apps/portainer.png
+> sidebar_icon = static/images/apps/portainer.png
+> description = Making Docker management easy
+> open_in = this_tab
+> data_sources = docker-endpoint-2
+>```
+>
+>
+> **Working example (using un-encrypted connection, on custom Docker card):**
+>```ini
+> [docker-endpoint-3]
+> platform = docker
+> prefix = http://
+> host = 192.168.0.110
+> port = 2375
+> card_type = Custom
+>
+> [Docker]
+> type = custom
+> data_sources = docker-endpoint-3
+>```
+"""
+
+import json
 from flask import render_template_string
 import requests
 import re
@@ -211,162 +312,6 @@ class Docker(object):
 
 
 class Platform:
-    def docs(self):
-        documentation = {
-            "name": "docker",
-            "author": "Thlb",
-            "author_url": "https://github.com/Thlb",
-            "version": 1.0,
-            "description": "Display information from Docker API. Informations can be displayed on a custom card or on an app card (e.g. Portainer App)",
-            "returns": "`value_template` as rendered string",
-            "returns_json_keys": [
-                "version",
-                "max_api_version",
-                "name",
-                "containers",
-                "containers_running",
-                "containers_paused",
-                "containers_stopped",
-                "images",
-                "driver",
-                "cpu",
-                "memory",
-                "warnings",
-                "error (for debug)",
-            ],
-            "example": """
-```ini
-# Working example (using un-encrypted connection, on Portainer card)
-[docker-endpoint-1]
-platform = docker
-prefix = http://
-host = 192.168.0.110
-port = 2375
-value_template = {{error}}<p style="text-align:right;text-transform:uppercase;font-size:14px;font-family: monospace;">{{name}}<br /><i style="position: relative; top: .2rem" class="material-icons md-18 theme-success-text" title="Running">fiber_manual_record</i>{{containers_running}}<i style="position: relative; top: .2rem" class="material-icons md-18 theme-warning-text" title="Paused">fiber_manual_record</i>{{containers_paused}}<i style="position: relative; top: .2rem" class="material-icons md-18 theme-failure-text" title="Stopped">fiber_manual_record</i>{{containers_stopped}}</p>
- 
-[Portainer]
-prefix = http://
-url = 192.168.0.110:2375
-icon = static/images/apps/portainer.png
-sidebar_icon = static/images/apps/portainer.png
-description = Making Docker management easy
-open_in = this_tab
-data_sources = docker-endpoint-1
-
-# Working example (using encrypted connection, on Portainer card)
-```ini
-[docker-endpoint-2]
-platform = docker
-prefix = https://
-host = 192.168.0.110
-port = 2376
-tls_mode = Both
-tls_ca = /path/to/ca_file
-tls_cert = /path/to/cert_file
-tls_key = /path/to/key_file
-value_template = {{error}}<p style="text-align:right;text-transform:uppercase;font-size:14px;font-family: monospace;">{{name}}<br /><i style="position: relative; top: .2rem" class="material-icons md-18 theme-success-text" title="Running">fiber_manual_record</i>{{containers_running}}<i style="position: relative; top: .2rem" class="material-icons md-18 theme-warning-text" title="Paused">fiber_manual_record</i>{{containers_paused}}<i style="position: relative; top: .2rem" class="material-icons md-18 theme-failure-text" title="Stopped">fiber_manual_record</i>{{containers_stopped}}</p>
-
-[Portainer]
-prefix = http://
-url = 192.168.0.110:2375
-icon = static/images/apps/portainer.png
-sidebar_icon = static/images/apps/portainer.png
-description = Making Docker management easy
-open_in = this_tab
-data_sources = docker-endpoint-2
-```
-
-# Working example (using un-encrypted connection, on custom Docker card)
-```ini
-[docker-endpoint-3]
-platform = docker
-prefix = http://
-host = 192.168.0.110
-port = 2375
-card_type = Custom
-
-[Docker]
-type = custom
-data_sources = docker-endpoint-3
-```
-            """,
-            "variables": [
-                {
-                    "variable": "[variable_name]",
-                    "description": "Name for the data source.",
-                    "default": "None, entry is required",
-                    "options": ".ini header",
-                },
-                {
-                    "variable": "platform",
-                    "description": "Name of the platform.",
-                    "default": "docker",
-                    "options": "docker",
-                },
-                {
-                    "variable": "prefix",
-                    "description": "The prefix for the app's url.",
-                    "default": "",
-                    "options": "web prefix, e.g. http:// or https://",
-                },
-                {
-                    "variable": "host",
-                    "description": "Docker Host",
-                    "default": "",
-                    "options": "url,ip",
-                },
-                {
-                    "variable": "port",
-                    "description": "Docker Port",
-                    "default": "",
-                    "options": "port",
-                },
-                {
-                    "variable": "api_version",
-                    "description": "API version, by default platform will try to find latest version",
-                    "default": "",
-                    "options": "1.40",
-                },
-                {
-                    "variable": "tls_mode",
-                    "description": "TLS verification mode",
-                    "default": "None",
-                    "options": "Server, Client, Both, None",
-                },
-                {
-                    "variable": "tls_ca",
-                    "description": "Requiered for tls_mode=Both or tls_mode=Server",
-                    "default": "None",
-                    "options": "/path/to/ca, None",
-                },
-                {
-                    "variable": "tls_cert",
-                    "description": "Requierd for tls_mode=Both or tls_mode=Client",
-                    "default": "None",
-                    "options": "/path/to/cert, None",
-                },
-                {
-                    "variable": "tls_key",
-                    "description": "Requierd for tls_mode=Both or tls_mode=Client",
-                    "default": "None",
-                    "options": "/path/to/key, None",
-                },
-                {
-                    "variable": "card_type",
-                    "description": "Set to Custom if you want to display informations in a custom card",
-                    "default": "App",
-                    "options": "Custom, App",
-                },
-                {
-                    "variable": "value_template",
-                    "description": "Jinja template for how the returned data from API is displayed.",
-                    "default": "",
-                    "options": "jinja template",
-                },
-            ],
-        }
-        return documentation
-
     def __init__(self, *args, **kwargs):
         # parse the user's options from the config entries
         for key, value in kwargs.items():

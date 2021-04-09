@@ -14,6 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
+lib/
 lib64/
 parts/
 sdist/
@@ -116,9 +117,7 @@ scheduler.db
 scheduler.db
 
 .idea/
-.vscode/
 
 dashmachine/user_data/
 dashmachine/static/images/icons
 dashmachine/static/images/backgrounds
-dashmachine/platform/custom_*

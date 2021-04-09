@@ -38,7 +38,6 @@ value_template = {{ value_template }}
 >data_sources = plex
 >```
 """
-
 import requests
 from flask import render_template_string
 
@@ -75,74 +74,16 @@ class Plex(object):
 
 
 class Platform:
-    def docs(self):
-        documentation = {
-            "name": "plex",
-            "author": "reedhaffner",
-            "author_url": "https://github.com/reedhaffner",
-            "version": 1.0,
-            "description": "Connect to Plex Media Server and see current sessions details",
-            "returns": "`value_template` as rendered string",
-            "returns_json_keys": ["sessions", "transcodes", "libraries",],
-            "example": """
-```ini
-[plex]
-platform = plex
-host = http://plex.example.com:32400
-token = abcde_fghi_jklmnopqr
-value_template = Sessions: {{sessions}}<br />Transcodes: {{transcodes}}
->
-[Plex]
-prefix = http://
-url = plex.example.com:32400
-icon = static/images/apps/plex.png
-description = Plex data sources example
-open_in = this_tab
-data_sources = plex
-```
-            """,
-            "variables": [
-                {
-                    "variable": "[variable_name]",
-                    "description": "Name for the data source.",
-                    "default": "None, entry is required",
-                    "options": ".ini header",
-                },
-                {
-                    "variable": "platform",
-                    "description": "Name of the platform.",
-                    "default": "plex",
-                    "options": "plex",
-                },
-                {
-                    "variable": "host",
-                    "description": "URL of Plex Media Server (include port, normally 32400)",
-                    "default": "",
-                    "options": "url",
-                },
-                {
-                    "variable": "token",
-                    "description": "X-Plex-Token (See [here](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/) for how to find it.)",
-                    "default": "",
-                    "options": "string",
-                },
-                {
-                    "variable": "value_template",
-                    "description": "Jinja template for how the returned data from API is displayed.",
-                    "default": "",
-                    "options": "jinja template",
-                },
-            ],
-        }
-        return documentation
-
     def __init__(self, *args, **kwargs):
         # parse the user's options from the config entries
         for key, value in kwargs.items():
             self.__dict__[key] = value
 
         if not hasattr(self, "token"):
-            self.token = None
+            print(
+                "Please add a token\nSee https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/ to find it."
+            )
+            exit(1)
         else:
             self.plex = Plex(self.host, self.token)
 

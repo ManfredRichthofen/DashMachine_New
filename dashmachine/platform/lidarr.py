@@ -1,3 +1,62 @@
+"""
+##### Lidarr
+Display information from Lidarr API
+```ini
+[variable_name]
+platform = lidarr
+prefix = http://
+host = localhost
+port = 8686
+api_key = my_api_key
+verify = true
+value_template = {{ value_template }}
+```
+> **Returns:** `value_template` as rendered string
+| Variable        | Required | Description                                                     | Options           |
+|-----------------|----------|-----------------------------------------------------------------|-------------------|
+| [variable_name] | Yes      | Name for the data source.                                       | [variable_name]   |
+| platform        | Yes      | Name of the platform.                                           | lidarr            |
+| prefix          | No       | The prefix for the app's url.                                   | web prefix, e.g. http:// or https://              |
+| host            | Yes      | Lidarr Host                                                     | url,ip            |
+| port            | No       | Lidarr Port                                                     | port              |
+| api_key         | Yes      | ApiKey                                                          | api key           |
+| api_version     | No       | API version (default : v1)                                      | v1                |
+| verify          | No       | Turn TLS verification on or off, default is true                | true,false        |
+| value_template  | Yes      | Jinja template for how the returned data from API is displayed. | jinja template    |
+<br />
+###### **Available fields for value_template**
+* version
+* wanted_missing
+* wanted_cutoff
+* queue
+* diskspace[x]['path']
+* diskspace[x]['total']
+* diskspace[x]['used']
+* diskspace[x]['free']
+* error (for debug)
+> **Working example:**
+>```ini
+> [lidarr-data]
+> platform = lidarr
+> prefix = http://
+> host = 192.168.0.110
+> port = 8686
+> api_key = {{ API Key }}
+> verify = False
+> value_template = {{error}}Missing : {{wanted_missing}}<br />Queue : {{queue}} <br />Free ({{diskspace[0]['path']}}) : {{diskspace[0]['free']}}
+>
+> [Lidarr]
+> prefix = http://
+> url = 192.168.0.110:8686
+> icon = static/images/apps/lidarr.png
+> sidebar_icon = static/images/apps/lidarr.png
+> description = Looks and smells like Sonarr but made for music
+> open_in = this_tab
+> data_sources = lidarr-data
+>```
+"""
+
+import json
 from flask import render_template_string
 import requests
 
@@ -187,105 +246,6 @@ class Lidarr(object):
 
 
 class Platform:
-    def docs(self):
-        documentation = {
-            "name": "lidarr",
-            "author": "Thlb",
-            "author_url": "https://github.com/Thlb",
-            "version": 1.0,
-            "description": "Display information from Lidarr API",
-            "returns": "`value_template` as rendered string",
-            "returns_json_keys": [
-                "version",
-                "wanted_missing",
-                "wanted_cutoff",
-                "queue",
-                "diskspace[x]['path']",
-                "diskspace[x]['total']",
-                "diskspace[x]['used']",
-                "diskspace[x]['free']",
-                "error (for debug)",
-            ],
-            "example": """
-```ini
-[lidarr-data]
-platform = lidarr
-prefix = http://
-host = 192.168.0.110
-port = 8686
-api_key = {{ API Key }}
-verify = False
-value_template = {{error}}Missing : {{wanted_missing}}<br />Queue : {{queue}} <br />Free ({{diskspace[0]['path']}}) : {{diskspace[0]['free']}}
-
-[Lidarr]
-prefix = http://
-url = 192.168.0.110:8686
-icon = static/images/apps/lidarr.png
-sidebar_icon = static/images/apps/lidarr.png
-description = Looks and smells like Sonarr but made for music
-open_in = this_tab
-data_sources = lidarr-data
-```
-            """,
-            "variables": [
-                {
-                    "variable": "[variable_name]",
-                    "description": "Name for the data source.",
-                    "default": "None, entry is required",
-                    "options": ".ini header",
-                },
-                {
-                    "variable": "platform",
-                    "description": "Name of the platform.",
-                    "default": "lidarr",
-                    "options": "lidarr",
-                },
-                {
-                    "variable": "prefix",
-                    "description": "The prefix for the app's url.",
-                    "default": "",
-                    "options": "web prefix, e.g. http:// or https://",
-                },
-                {
-                    "variable": "host",
-                    "description": "Lidarr Host",
-                    "default": "",
-                    "options": "url,ip",
-                },
-                {
-                    "variable": "port",
-                    "description": "Lidarr Port",
-                    "default": "",
-                    "options": "port",
-                },
-                {
-                    "variable": "api_key",
-                    "description": "ApiKey",
-                    "default": "",
-                    "options": "api key",
-                },
-                {
-                    "variable": "api_version",
-                    "description": "API version",
-                    "default": "v1",
-                    "options": "v1",
-                },
-                {
-                    "variable": "verify",
-                    "description": "Turn TLS verification on or off, default is true",
-                    "default": "",
-                    "options": "true,false",
-                },
-                {
-                    "variable": "value_template",
-                    "description": "Jinja template for how the returned data from API is displayed.",
-                    "default": "",
-                    "options": "jinja template",
-                },
-            ],
-        }
-        return documentation
-
     def __init__(self, *args, **kwargs):
         # parse the user's options from the config entries
         for key, value in kwargs.items():

@@ -1,3 +1,60 @@
+"""
+##### Radarr
+Display information from Radarr API
+```ini
+[variable_name]
+platform = radarr
+prefix = http://
+host = localhost
+port = 7878
+api_key = my_api_key
+verify = true
+value_template = {{ value_template }}
+```
+> **Returns:** `value_template` as rendered string
+| Variable        | Required | Description                                                     | Options           |
+|-----------------|----------|-----------------------------------------------------------------|-------------------|
+| [variable_name] | Yes      | Name for the data source.                                       | [variable_name]   |
+| platform        | Yes      | Name of the platform.                                           | radarr            |
+| prefix          | No       | The prefix for the app's url.                                   | web prefix, e.g. http:// or https://              |
+| host            | Yes      | Radarr Host                                                     | url,ip            |
+| port            | No       | Radarr Port                                                     | port              |
+| api_key         | Yes      | ApiKey                                                          | api key           |
+| verify          | No       | Turn TLS verification on or off, default is true                | true,false        |
+| value_template  | Yes      | Jinja template for how the returned data from API is displayed. | jinja template    |
+<br />
+###### **Available fields for value_template**
+* version
+* movies
+* queue
+* diskspace[x]['path']
+* diskspace[x]['total']
+* diskspace[x]['used']
+* diskspace[x]['free']
+* error (for debug)
+> **Working example:**
+>```ini
+> [radarr-data]
+> platform = radarr
+> prefix = http://
+> host = 192.168.0.110
+> port = 7878
+> api_key = {{ API Key }}
+> verify = False
+> value_template = {{error}}Movies : {{movies}}<br />Queue : {{queue}} <br />Free ({{diskspace[0]['path']}}) : {{diskspace[0]['free']}}
+>
+> [Radarr]
+> prefix = http://
+> url = 192.168.0.110:7878
+> icon = static/images/apps/radarr.png
+> sidebar_icon = static/images/apps/radarr.png
+> description = A fork of Sonarr to work with movies à la Couchpotato
+> open_in = this_tab
+> data_sources = radarr-data
+>```
+"""
+
+import json
 from flask import render_template_string
 import requests
 
@@ -175,98 +232,6 @@ class Radarr(object):
 
 
 class Platform:
-    def docs(self):
-        documentation = {
-            "name": "radarr",
-            "author": "Thlb",
-            "author_url": "https://github.com/Thlb",
-            "version": 1.0,
-            "description": "Display information from Radarr API",
-            "returns": "`value_template` as rendered string",
-            "returns_json_keys": [
-                "version",
-                "movies",
-                "queue",
-                "diskspace[x]['path']",
-                "diskspace[x]['total']",
-                "diskspace[x]['used']",
-                "diskspace[x]['free']",
-                "error (for debug)",
-            ],
-            "example": """
-```ini
-[radarr-data]
-platform = radarr
-prefix = http://
-host = 192.168.0.110
-port = 7878
-api_key = {{ API Key }}
-verify = False
-value_template = {{error}}Movies : {{movies}}<br />Queue : {{queue}} <br />Free ({{diskspace[0]['path']}}) : {{diskspace[0]['free']}}
-
-[Radarr]
-prefix = http://
-url = 192.168.0.110:7878
-icon = static/images/apps/radarr.png
-sidebar_icon = static/images/apps/radarr.png
-description = A fork of Sonarr to work with movies à la Couchpotato
-open_in = this_tab
-data_sources = radarr-data
-```
-            """,
-            "variables": [
-                {
-                    "variable": "[variable_name]",
-                    "description": "Name for the data source.",
-                    "default": "None, entry is required",
-                    "options": ".ini header",
-                },
-                {
-                    "variable": "platform",
-                    "description": "Name of the platform.",
-                    "default": "radarr",
-                    "options": "radarr",
-                },
-                {
-                    "variable": "prefix",
-                    "description": "The prefix for the app's url.",
-                    "default": "",
-                    "options": "web prefix, e.g. http:// or https://",
-                },
-                {
-                    "variable": "host",
-                    "description": "Radarr Host",
-                    "default": "",
-                    "options": "url,ip",
-                },
-                {
-                    "variable": "port",
-                    "description": "Radarr Port",
-                    "default": "",
-                    "options": "port",
-                },
-                {
-                    "variable": "api_key",
-                    "description": "ApiKey",
-                    "default": "",
-                    "options": "api key",
-                },
-                {
-                    "variable": "verify",
-                    "description": "Turn TLS verification on or off, default is true",
-                    "default": "",
-                    "options": "true,false",
-                },
-                {
-                    "variable": "value_template",
-                    "description": "Jinja template for how the returned data from API is displayed.",
-                    "default": "",
-                    "options": "jinja template",
-                },
-            ],
-        }
-        return documentation
-
     def __init__(self, *args, **kwargs):
         # parse the user's options from the config entries
         for key, value in kwargs.items():
